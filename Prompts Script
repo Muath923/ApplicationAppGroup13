@@ -1,0 +1,355 @@
+User:  
+ROLE: You are a senior Next.js engineer and accessibility reviewer.
+CONTEXT: We are building a Campus Companion web app for first-year students.
+CONSTRAINTS:
+
+Next.js (App Router), TypeScript
+
+Serverless backend: Supabase OR Netlify Functions (choose one)
+
+Accessibility: WCAG AA principles, keyboard-first
+
+Data: fictional only (no real personal data)
+TASK: Plan the main UI shell for the Campus Companion app (layout, sidebar/content split, basic theming) and create a reusable Toast component for feedback messages. Don’t wire up data yet, just structure and styling.
+OUTPUT FORMAT: Provide (1) files to create/edit, (2) code only, (3) brief test steps.
+SELF-CHECK: After code, list likely accessibility issues and fixes.
+
+Assistant:  
+Files to create/edit
+
+app/companion/CompanionApp.tsx
+
+tsx
+"use client";
+
+import { useState, useEffect } from "react";
+
+// ─── TOAST ───
+function Toast({ message, show }: { message: string; show: boolean }) {
+  if (!show) return null;
+  return (
+    <div
+      style={{
+        position: "fixed",
+        bottom: 30,
+        left: "50%",
+        transform: "translateX(-50%)",
+        background: "linear-gradient(135deg, #7c6bc4, #a78bfa)",
+        color: "#fff",
+        padding: "14px 28px",
+        borderRadius: 14,
+        fontSize: 14,
+        fontWeight: 600,
+        boxShadow: "0 8px 32px #7c6bc440",
+        zIndex: 999,
+        backdropFilter: "blur(10px)",
+        animation: "fadeInUp 0.35s cubic-bezier(0.16,1,0.3,1)",
+        maxWidth: 380,
+        textAlign: "center",
+      }}
+    >
+      {message}
+    </div>
+  );
+}
+
+// ─── MAIN APP SHELL ───
+export default function CompanionApp() {
+  const [toast, setToast] = useState<{ show: boolean; msg: string }>({
+    show: false,
+    msg: "",
+  });
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const showToast = (msg: string) => {
+    setToast({ show: true, msg });
+    setTimeout(() => setToast({ show: false, msg: "" }), 2800);
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        minHeight: "100vh",
+        background:
+          "linear-gradient(180deg, #f8f7fc 0%, #eeecf5 50%, #e8e4f3 100%)",
+        fontFamily: "'Segoe UI', sans-serif",
+        position: "relative",
+      }}
+    >
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translate(-50%, 10px); }
+          to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        * { scrollbar-width: thin; scrollbar-color: #c4b5fd #f8f7fc; }
+        *::-webkit-scrollbar { width: 6px; }
+        *::-webkit-scrollbar-track { background: #f8f7fc; }
+        *::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 3px; }
+        button:hover { opacity: 0.92; }
+        input:focus, textarea:focus { border-color: #c4b5fd !important; }
+      `}</style>
+
+      <Toast message={toast.msg} show={toast.show} />
+
+      {/* Sidebar + content will go here later */}
+      <div style={{ flex: 1 }} />
+    </div>
+  );
+}
+Test steps
+
+Run npm run dev and open the page.
+
+Temporarily call showToast("Test toast") inside useEffect to verify the toast appears and fades.
+
+Resize the window to confirm isMobile toggles correctly (you can log it).
+
+SELF-CHECK (accessibility)
+
+Toast is not announced to screen readers yet → add role="status" and aria-live="polite".
+
+No keyboard trap yet, but future sidebar/content must remain keyboard navigable.
+
+Colour contrast of gradient text on white should be checked against WCAG AA.
+
+User:  
+ROLE: You are a senior Next.js engineer and accessibility reviewer.
+CONTEXT: Same Campus Companion app.
+CONSTRAINTS: Same as before.
+TASK: Add a visually rich CampusBanner component at the top of the Home view using CSS “art” (gradients, shapes, silhouettes). It should greet “Sarah” and show a short summary line. Don’t worry about props yet, just hard-code the text.
+OUTPUT FORMAT: (1) Update CompanionApp.tsx only, (2) code only, (3) brief test steps.
+SELF-CHECK: After code, list likely accessibility issues and fixes.
+
+Assistant:
+
+tsx
+// ─── STUDENT BACKGROUND IMAGES (CSS gradient art) ───
+function CampusBanner() {
+  return (
+    <div
+      style={{
+        position: "relative",
+        width: "100%",
+        height: 200,
+        borderRadius: 20,
+        overflow: "hidden",
+        marginBottom: 20,
+      }}
+    >
+      {/* Main campus gradient */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(135deg, #c4b5fd 0%, #a78bfa 25%, #7c6bc4 50%, #6d5aad 75%, #e8e4f3 100%)",
+        }}
+      />
+      {/* Simulated buildings */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 40,
+          width: 80,
+          height: 120,
+          background: "#6d5aad",
+          borderRadius: "8px 8px 0 0",
+          opacity: 0.5,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 130,
+          width: 60,
+          height: 90,
+          background: "#8b7cc8",
+          borderRadius: "8px 8px 0 0",
+          opacity: 0.4,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 200,
+          width: 100,
+          height: 140,
+          background: "#5a4a9e",
+          borderRadius: "8px 8px 0 0",
+          opacity: 0.45,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: 80,
+          width: 70,
+          height: 100,
+          background: "#7c6bc4",
+          borderRadius: "8px 8px 0 0",
+          opacity: 0.4,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: 160,
+          width: 90,
+          height: 130,
+          background: "#6d5aad",
+          borderRadius: "8px 8px 0 0",
+          opacity: 0.35,
+        }}
+      />
+      {/* Trees */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 310,
+          width: 30,
+          height: 50,
+          background: "#5baf7a",
+          borderRadius: "50% 50% 0 0",
+          opacity: 0.5,
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          right: 30,
+          width: 35,
+          height: 60,
+          background: "#4da36a",
+          borderRadius: "50% 50% 0 0",
+          opacity: 0.45,
+        }}
+      />
+      {/* Sun/light source */}
+      <div
+        style={{
+          position: "absolute",
+          top: 25,
+          right: 50,
+          width: 60,
+          height: 60,
+          background:
+            "radial-gradient(circle, #fef3e2 0%, transparent 70%)",
+          borderRadius: "50%",
+          opacity: 0.8,
+        }}
+      />
+      {/* People silhouettes */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 10,
+          left: "38%",
+          display: "flex",
+          gap: 8,
+          opacity: 0.35,
+        }}
+      >
+        {[40, 44, 38, 42, 36].map((h, i) => (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: "50%",
+                background: "#3d2b5a",
+              }}
+            />
+            <div
+              style={{
+                width: 14,
+                height: h - 12,
+                background: "#3d2b5a",
+                borderRadius: "4px 4px 0 0",
+                marginTop: 1,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+      {/* Overlay gradient for text */}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(to top, rgba(248,247,252,0.95) 0%, rgba(248,247,252,0.4) 50%, transparent 100%)",
+        }}
+      />
+      {/* Text */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 20,
+          left: 24,
+          zIndex: 2,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 28,
+            fontWeight: 800,
+            color: "#2d2b3d",
+            lineHeight: 1.2,
+          }}
+        >
+          Good morning, Sarah
+        </div>
+        <div
+          style={{
+            fontSize: 14,
+            color: "#7c6bc4",
+            marginTop: 4,
+            fontWeight: 500,
+          }}
+        >
+          You have 3 classes and 2 events today
+        </div>
+      </div>
+    </div>
+  );
+}
+To use it, render <CampusBanner /> inside your main content area (we’ll add that once we build the layout).
+
+Test steps
+
+Temporarily render <CampusBanner /> inside CompanionApp’s return.
+
+Check that the gradient art and text appear correctly.
+
+Resize the window to ensure it still looks acceptable on smaller widths.
+
+SELF-CHECK (accessibility)
+
+Banner is purely decorative but contains important text; ensure text is real text (it is) and not images.
+
+Consider adding a heading role or <h1> for the greeting for screen reader structure.
+
+Ensure colour contrast between text and background meets WCAG AA.
