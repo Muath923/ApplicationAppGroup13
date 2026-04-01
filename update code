@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campus Companion App</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f2fa; color: #2d2b3d; }
+    header { background: linear-gradient(135deg, #7c6bc4, #5b4a9e); color: white; padding: 20px; text-align: center; }
+    header h1 { font-size: 22px; }
+    header p { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+    .container { max-width: 800px; margin: 20px auto; padding: 0 16px; }
+    .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid #e8e4f0; }
+    .card h2 { font-size: 16px; margin-bottom: 10px; color: #7c6bc4; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px; }
+    .stat { background: white; border-radius: 12px; padding: 14px; text-align: center; border: 1px solid #e8e4f0; }
+    .stat .num { font-size: 24px; font-weight: 700; color: #7c6bc4; }
+    .stat .label { font-size: 12px; color: #8a879a; margin-top: 4px; }
+    .class-item { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0ecf5; }
+    .class-item:last-child { border-bottom: none; }
+    .time-col { width: 55px; font-weight: 700; font-size: 13px; color: #7c6bc4; }
+    .class-info { flex: 1; }
+    .class-info h3 { font-size: 14px; font-weight: 600; }
+    .class-info p { font-size: 12px; color: #8a879a; margin-top: 2px; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; background: #eae6f4; color: #7c6bc4; }
+    .event { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0ecf5; }
+    .event:last-child { border-bottom: none; }
+    .event-info h3 { font-size: 14px; font-weight: 600; }
+    .event-info p { font-size: 12px; color: #8a879a; margin-top: 2px; }
+    .btn { padding: 6px 14px; border-radius: 8px; border: none; background: #7c6bc4; color: white; font-size: 12px; font-weight: 600; cursor: pointer; }
+    footer { text-align: center; padding: 20px; font-size: 12px; color: #8a879a; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Campus Companion</h1>
+    <p>Welcome back, Sarah Mitchell — BSc Computing, Year 1</p>
+  </header>
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><div class="num">91%</div><div class="label">Attendance</div></div>
+      <div class="stat"><div class="num">2</div><div class="label">Due Soon</div></div>
+      <div class="stat"><div class="num">4</div><div class="label">Events This Week</div></div>
+      <div class="stat"><div class="num">47</div><div class="label">Print Credits</div></div>
+    </div>
+    <div class="card">
+      <h2>Today's Classes — Monday</h2>
+      <div class="class-item">
+        <div class="time-col">09:00</div>
+        <div class="class-info">
+          <h3>Enterprise Computing <span class="badge">Lecture</span></h3>
+          <p>A101 · Dr. Keith Nolan</p>
+        </div>
+      </div>
+      <div class="class-item">
+        <div class="time-col">11:00</div>
+        <div class="class-info">
+          <h3>Database Systems <span class="badge">Lab</span></h3>
+          <p>B204 · Ms. Claire Dunne</p>
+        </div>
+      </div>
+      <div class="class-item">
+        <div class="time-col">14:00</div>
+        <div class="class-info">
+          <h3>Networking Fundamentals <span class="badge">Tutorial</span></h3>
+          <p>C302 · Mr. James O'Brien</p>
+        </div>
+      </div>
+      <div class="class-item">
+        <div class="time-col">16:00</div>
+        <div class="class-info">
+          <h3>Discrete Mathematics <span class="badge">Lecture</span></h3>
+          <p>A205 · Dr. Anna Kelly</p>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Upcoming Events</h2>
+      <div class="event">
+        <div class="event-info">
+          <h3>Coding Society Meetup</h3>
+          <p>Today · 5:00 PM · Lab C1</p>
+        </div>
+        <button class="btn">RSVP</button>
+      </div>
+      <div class="event">
+        <div class="event-info">
+          <h3>Career Fair 2025</h3>
+          <p>Wed · 10:00 AM · Main Hall</p>
+        </div>
+        <button class="btn">RSVP</button>
+      </div>
+      <div class="event">
+        <div class="event-info">
+          <h3>Board Game Night</h3>
+          <p>Fri · 7:00 PM · Student Bar</p>
+        </div>
+        <button class="btn">RSVP</button>
+      </div>
+    </div>
+  </div>
+  <footer>Campus Companion App &copy; 2025 — Student ID: STU-2024-0847</footer>
+</body>
+</html>
