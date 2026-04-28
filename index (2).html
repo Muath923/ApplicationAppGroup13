@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus Companion App</title>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  body { margin: 0; font-family: 'Segoe UI', sans-serif; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ─── TOAST ───
+function Toast({ message, show }) {
+  if (!show) return null;
+  return (
+    <div role="status" aria-live="polite" style={{
+      position: "fixed", bottom: 30, left: "50%", transform: "translateX(-50%)",
+      background: "linear-gradient(135deg, #7c6bc4, #a78bfa)", color: "#fff",
+      padding: "14px 28px", borderRadius: 14, fontSize: 14, fontWeight: 600,
+      boxShadow: "0 8px 32px #7c6bc440", zIndex: 999, backdropFilter: "blur(10px)",
+      animation: "fadeInUp 0.35s cubic-bezier(0.16,1,0.3,1)", maxWidth: 380, textAlign: "center",
+    }}>{message}</div>
+  );
+}
+
+// ─── CAMPUS BANNER ───
+function CampusBanner() {
+  return (
+    <div style={{ position: "relative", width: "100%", height: 200, borderRadius: 20, overflow: "hidden", marginBottom: 20 }}>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #c4b5fd 0%, #a78bfa 25%, #7c6bc4 50%, #6d5aad 75%, #e8e4f3 100%)" }} />
+      <div style={{ position: "absolute", bottom: 0, left: 40, width: 80, height: 120, background: "#6d5aad", borderRadius: "8px 8px 0 0", opacity: 0.5 }} />
+      <div style={{ position: "absolute", bottom: 0, left: 130, width: 60, height: 90, background: "#8b7cc8", borderRadius: "8px 8px 0 0", opacity: 0.4 }} />
+      <div style={{ position: "absolute", bottom: 0, left: 200, width: 100, height: 140, background: "#5a4a9e", borderRadius: "8px 8px 0 0", opacity: 0.45 }} />
+      <div style={{ position: "absolute", bottom: 0, right: 80, width: 70, height: 100, background: "#7c6bc4", borderRadius: "8px 8px 0 0", opacity: 0.4 }} />
+      <div style={{ position: "absolute", bottom: 0, right: 160, width: 90, height: 130, background: "#6d5aad", borderRadius: "8px 8px 0 0", opacity: 0.35 }} />
+      <div style={{ position: "absolute", bottom: 0, left: 310, width: 30, height: 50, background: "#5baf7a", borderRadius: "50% 50% 0 0", opacity: 0.5 }} />
+      <div style={{ position: "absolute", bottom: 0, right: 30, width: 35, height: 60, background: "#4da36a", borderRadius: "50% 50% 0 0", opacity: 0.45 }} />
+      <div style={{ position: "absolute", top: 25, right: 50, width: 60, height: 60, background: "radial-gradient(circle, #fef3e2 0%, transparent 70%)", borderRadius: "50%", opacity: 0.8 }} />
+      <div style={{ position: "absolute", bottom: 10, left: "38%", display: "flex", gap: 8, opacity: 0.35 }}>
+        {[40, 44, 38, 42, 36].map((h, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#3d2b5a" }} />
+            <div style={{ width: 14, height: h - 12, background: "#3d2b5a", borderRadius: "4px 4px 0 0", marginTop: 1 }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(248,247,252,0.95) 0%, rgba(248,247,252,0.4) 50%, transparent 100%)" }} />
+      <div style={{ position: "absolute", bottom: 20, left: 24, zIndex: 2 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: "#2d2b3d", lineHeight: 1.2, margin: 0 }}>Good morning, Sarah</h1>
+        <div style={{ fontSize: 14, color: "#7c6bc4", marginTop: 4, fontWeight: 500 }}>You have 3 classes and 2 events today</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── GLASS CARD ───
+function GlassCard({ children, style = {}, onClick }) {
+  return (
+    <div onClick={onClick} style={{
+      background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
+      borderRadius: 16, padding: "18px 20px",
+      border: "1px solid rgba(124,107,196,0.1)",
+      boxShadow: "0 4px 20px rgba(124,107,196,0.08), 0 1px 3px rgba(0,0,0,0.04)",
+      transition: "transform 0.2s, box-shadow 0.2s",
+      cursor: onClick ? "pointer" : "default",
+      ...style,
+    }}>{children}</div>
+  );
+}
+
+// ─── MAIN APP ───
+function CompanionApp() {
+  const [activeTab, setActiveTab] = useState("home");
+  const [toast, setToast] = useState({ show: false, msg: "" });
+  const [rsvps, setRsvps] = useState({});
+  const [reminders, setReminders] = useState({});
+  const [ticketSubject, setTicketSubject] = useState("");
+  const [ticketDesc, setTicketDesc] = useState("");
+  const [ticketSent, setTicketSent] = useState(false);
+  const [lostItems, setLostItems] = useState([
+    { id: 1, item: "Blue Water Bottle", loc: "Block A Corridor", date: "Today", claimed: false },
+    { id: 2, item: "Black Umbrella", loc: "Library 2nd Floor", date: "Yesterday", claimed: false },
+    { id: 3, item: "AirPods Case", loc: "Canteen Table 5", date: "Mon", claimed: false },
+    { id: 4, item: "USB-C Charger", loc: "Lab B204", date: "Today", claimed: false },
+  ]);
+  const [a11y, setA11y] = useState({ largeText: false, highContrast: false, reducedMotion: false, screenReader: false });
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const showToast = (msg) => {
+    setToast({ show: true, msg });
+    setTimeout(() => setToast({ show: false, msg: "" }), 2800);
+  };
+
+  const tabs = [
+    { id: "home", label: "Home", icon: "🏠" },
+    { id: "timetable", label: "Timetable", icon: "📅" },
+    { id: "events", label: "Events", icon: "🎉" },
+    { id: "map", label: "Campus Map", icon: "📍" },
+    { id: "canteen", label: "Canteen", icon: "🍽" },
+    { id: "helpdesk", label: "Helpdesk", icon: "🎫" },
+    { id: "lost", label: "Lost & Found", icon: "🔍" },
+    { id: "a11y", label: "Settings", icon: "⚙️" },
+  ];
+
+  const selectTab = (id) => { setActiveTab(id); setSidebarOpen(false); };
+
+  const classes = [
+    { time: "09:00", end: "10:00", name: "Enterprise Computing", room: "A101", type: "Lecture", color: "#7c6bc4" },
+    { time: "11:00", end: "13:00", name: "Database Systems", room: "B204", type: "Lab", color: "#e09f3e" },
+    { time: "14:00", end: "15:00", name: "Networking", room: "C302", type: "Tutorial", color: "#5baf7a" },
+  ];
+
+  const events = [
+    { id: "e1", name: "Coding Society Meetup", date: "Today · 5:00 PM", loc: "Lab C1", tag: "Society", spots: 12, desc: "Weekly coding challenges and pizza" },
+    { id: "e2", name: "Career Fair 2026", date: "Wed · 10:00 AM", loc: "Main Hall", tag: "Career", spots: 200, desc: "Meet top employers hiring grads" },
+    { id: "e3", name: "Board Game Night", date: "Fri · 7:00 PM", loc: "Student Bar", tag: "Social", spots: 20, desc: "Bring your mates, games provided" },
+    { id: "e4", name: "Women in Tech Panel", date: "Thu · 2:00 PM", loc: "Lecture Hall A", tag: "Talk", spots: 80, desc: "Industry leaders share their stories" },
+  ];
+
+  const menu = [
+    { name: "Chicken Curry & Rice", price: "€6.50", tag: "Hot", veg: false, cals: "520 kcal", allergens: "Dairy, Gluten" },
+    { name: "Caesar Salad", price: "€5.00", tag: "Cold", veg: true, cals: "340 kcal", allergens: "Dairy, Egg" },
+    { name: "Beef Burger & Chips", price: "€7.00", tag: "Hot", veg: false, cals: "680 kcal", allergens: "Gluten" },
+    { name: "Veggie Wrap", price: "€5.50", tag: "Cold", veg: true, cals: "380 kcal", allergens: "Gluten" },
+    { name: "Soup of the Day", price: "€3.50", tag: "Hot", veg: true, cals: "190 kcal", allergens: "Varies" },
+  ];
+
+  const locations = [
+    { name: "Block A — Lectures", status: "Open", hours: "8am – 6pm" },
+    { name: "Block B — Labs", status: "Open", hours: "8am – 9pm" },
+    { name: "Library", status: "Open", hours: "8am – 9pm" },
+    { name: "Student Bar", status: "Opens 4pm", hours: "4pm – 11pm" },
+    { name: "Canteen", status: "Closes 3pm", hours: "8am – 3pm" },
+    { name: "Sports Hall", status: "Open", hours: "7am – 10pm" },
+    { name: "IT Help Desk", status: "Open", hours: "9am – 5pm" },
+    { name: "Student Services", status: "Open", hours: "9am – 4:30pm" },
+  ];
+
+  const sidebar = (
+    <div style={{
+      width: isMobile ? 260 : 240, minHeight: "100vh",
+      background: "linear-gradient(180deg, #f3f0fa 0%, #e8e4f3 100%)",
+      padding: "28px 16px", display: "flex", flexDirection: "column", gap: 4,
+      borderRight: "1px solid #e0dced",
+      ...(isMobile ? {
+        position: "fixed", top: 0, left: sidebarOpen ? 0 : -280, zIndex: 100,
+        transition: "left 0.3s ease", boxShadow: sidebarOpen ? "4px 0 30px #0003" : "none",
+      } : {}),
+    }}>
+      <div style={{ padding: "0 12px 20px", borderBottom: "1px solid #d8d0ee", marginBottom: 8 }}>
+        <div style={{ fontSize: 11, color: "#7c6bc4", fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>Companion App</div>
+        <div style={{ fontSize: 18, fontWeight: 700, marginTop: 6, color: "#2d2b3d" }}>Sarah Mitchell</div>
+        <div style={{ fontSize: 12, color: "#a09cb0", marginTop: 2 }}>Computing · Year 1</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+          <div aria-label="Sarah profile" style={{
+            width: 40, height: 40, borderRadius: "50%",
+            background: "linear-gradient(135deg, #a78bfa, #c4b5fd)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontWeight: 700, fontSize: 17, color: "#fff",
+          }}>S</div>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: "#2d2b3d" }}>A00041160</div>
+            <div style={{ fontSize: 10, color: "#a09cb0" }}>sarah.mitchell@student.ie</div>
+          </div>
+        </div>
+      </div>
+      {tabs.map((t) => (
+        <button key={t.id} onClick={() => selectTab(t.id)} aria-current={activeTab === t.id ? "page" : undefined} style={{
+          display: "flex", alignItems: "center", gap: 12,
+          background: activeTab === t.id ? "linear-gradient(135deg, #7c6bc4, #a78bfa)" : "transparent",
+          color: activeTab === t.id ? "#fff" : "#6b5f8a",
+          border: "none", borderRadius: 12, padding: "12px 16px", cursor: "pointer",
+          fontSize: 13, fontWeight: 600, textAlign: "left", transition: "all 0.2s",
+          boxShadow: activeTab === t.id ? "0 4px 16px #7c6bc430" : "none",
+        }}>
+          <span style={{ fontSize: 16 }}>{t.icon}</span> {t.label}
+        </button>
+      ))}
+    </div>
+  );
+
+  const content = (
+    <div style={{ flex: 1, minHeight: "100vh", padding: isMobile ? "16px" : "28px 36px", overflowY: "auto" }}>
+      {isMobile && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" style={{ background: "none", border: "none", fontSize: 24, cursor: "pointer" }}>☰</button>
+          <div style={{ fontSize: 13, fontWeight: 700, color: "#7c6bc4", letterSpacing: 1.5, textTransform: "uppercase" }}>Companion App</div>
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg, #a78bfa, #c4b5fd)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 13, color: "#fff" }}>S</div>
+        </div>
+      )}
+
+      {/* HOME */}
+      {activeTab === "home" && (
+        <div>
+          <CampusBanner />
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr 1fr", gap: 14, marginBottom: 24 }}>
+            {[
+              { label: "Next Class", value: "DB Systems", sub: "B204 · 11:00 AM", color: "#7c6bc4", icon: "📚" },
+              { label: "Events Today", value: "2 Events", sub: `${Object.keys(rsvps).length} RSVP'd`, color: "#e09f3e", icon: "🎯" },
+              { label: "Canteen", value: "Open Now", sub: "Closes at 3pm", color: "#5baf7a", icon: "🍽" },
+              { label: "Lost Items", value: `${lostItems.filter((x) => !x.claimed).length} Found`, sub: "Check if yours", color: "#e05a6d", icon: "🔍" },
+            ].map((s, i) => (
+              <GlassCard key={i} onClick={() => selectTab(["timetable", "events", "canteen", "lost"][i])} style={{ cursor: "pointer" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: "#8a879a", fontWeight: 600, textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</div>
+                    <div style={{ fontSize: 18, fontWeight: 800, marginTop: 6, color: "#2d2b3d" }}>{s.value}</div>
+                    <div style={{ fontSize: 12, color: "#a09cb0", marginTop: 3 }}>{s.sub}</div>
+                  </div>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: s.color + "15", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>{s.icon}</div>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#2d2b3d", margin: 0 }}>Today's Schedule</h2>
+              <button onClick={() => setActiveTab("timetable")} style={{ background: "none", border: "none", color: "#7c6bc4", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>View all →</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {classes.map((c, i) => (
+                <GlassCard key={i} style={{ display: "flex", gap: 16, alignItems: "center" }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 14, background: `linear-gradient(135deg, ${c.color}20, ${c.color}08)`, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: c.color }}>{c.time}</div>
+                    <div style={{ fontSize: 9, color: c.color, opacity: 0.7 }}>{c.end}</div>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: "#2d2b3d" }}>{c.name}</div>
+                    <div style={{ fontSize: 12, color: "#a09cb0", marginTop: 3 }}>Room {c.room}</div>
+                  </div>
+                  <span style={{ fontSize: 11, background: c.color + "15", color: c.color, padding: "5px 12px", borderRadius: 8, fontWeight: 700 }}>{c.type}</span>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "#2d2b3d", margin: 0 }}>Upcoming Events</h2>
+              <button onClick={() => setActiveTab("events")} style={{ background: "none", border: "none", color: "#7c6bc4", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>View all →</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+              {events.slice(0, 2).map((e) => (
+                <GlassCard key={e.id}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: "#2d2b3d" }}>{e.name}</div>
+                    <span style={{ fontSize: 10, background: "#eae6f4", color: "#7c6bc4", padding: "4px 10px", borderRadius: 8, fontWeight: 700 }}>{e.tag}</span>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#8a879a", marginTop: 6 }}>{e.desc}</div>
+                  <div style={{ fontSize: 12, color: "#a09cb0", marginTop: 8 }}>📍 {e.loc} · 🕐 {e.date}</div>
+                </GlassCard>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TIMETABLE */}
+      {activeTab === "timetable" && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#2d2b3d", margin: 0 }}>Timetable</h1>
+            <p style={{ fontSize: 13, color: "#a09cb0", marginTop: 4 }}>Monday, 3 March 2026</p>
+          </div>
+          <div style={{ position: "relative", paddingLeft: 28 }}>
+            <div style={{ position: "absolute", left: 8, top: 10, bottom: 10, width: 2, background: "linear-gradient(180deg, #c4b5fd, #e8e4f3)", borderRadius: 2 }} />
+            {classes.map((c, i) => (
+              <div key={i} style={{ position: "relative", marginBottom: 16 }}>
+                <div style={{ position: "absolute", left: -24, top: 18, width: 14, height: 14, borderRadius: "50%", background: c.color, border: "3px solid #f8f7fc", zIndex: 1 }} />
+                <GlassCard style={{ display: "flex", gap: 16, alignItems: "center", marginLeft: 8 }}>
+                  <div style={{ minWidth: 70, textAlign: "center" }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: c.color }}>{c.time}</div>
+                    <div style={{ fontSize: 11, color: "#a09cb0" }}>to {c.end}</div>
+                  </div>
+                  <div style={{ width: 3, height: 50, borderRadius: 2, background: `linear-gradient(180deg, ${c.color}, ${c.color}40)` }} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, fontSize: 16, color: "#2d2b3d" }}>{c.name}</div>
+                    <div style={{ fontSize: 13, color: "#a09cb0", marginTop: 3 }}>Room {c.room} · {c.type}</div>
+                  </div>
+                  <button onClick={() => {
+                    setReminders((p) => ({ ...p, [i]: !p[i] }));
+                    showToast(reminders[i] ? `Reminder off for ${c.name}` : `Reminder set for ${c.name} 🔔`);
+                  }} style={{
+                    background: reminders[i] ? `linear-gradient(135deg, ${c.color}, ${c.color}cc)` : c.color + "15",
+                    color: reminders[i] ? "#fff" : c.color, border: "none", borderRadius: 10,
+                    padding: "8px 16px", cursor: "pointer", fontSize: 12, fontWeight: 700,
+                    transition: "all 0.2s", boxShadow: reminders[i] ? `0 4px 16px ${c.color}40` : "none",
+                  }}>{reminders[i] ? "🔔 Reminder On" : "🔔 Set Reminder"}</button>
+                </GlassCard>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* EVENTS */}
+      {activeTab === "events" && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#2d2b3d", margin: 0 }}>Events</h1>
+            <p style={{ fontSize: 13, color: "#a09cb0", marginTop: 4 }}>Discover what's happening on campus</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 14 }}>
+            {events.map((e) => {
+              const colors = { Society: "#7c6bc4", Career: "#e09f3e", Social: "#5baf7a", Talk: "#e05a6d" };
+              const c = colors[e.tag] || "#7c6bc4";
+              return (
+                <GlassCard key={e.id} style={{ display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                      <span style={{ fontSize: 11, background: c + "15", color: c, padding: "4px 12px", borderRadius: 8, fontWeight: 700 }}>{e.tag}</span>
+                      <span style={{ fontSize: 11, color: "#a09cb0" }}>{e.spots} spots</span>
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: 17, color: "#2d2b3d", marginBottom: 6 }}>{e.name}</div>
+                    <div style={{ fontSize: 13, color: "#8a879a", marginBottom: 10, lineHeight: 1.5 }}>{e.desc}</div>
+                    <div style={{ fontSize: 12, color: "#a09cb0" }}>📍 {e.loc} · 🕐 {e.date}</div>
+                  </div>
+                  <button onClick={() => {
+                    setRsvps((p) => p[e.id] ? (() => { const n = { ...p }; delete n[e.id]; return n; })() : { ...p, [e.id]: true });
+                    showToast(rsvps[e.id] ? "RSVP cancelled" : `You're going to ${e.name}! 🎉`);
+                  }} style={{
+                    marginTop: 14, width: "100%",
+                    background: rsvps[e.id] ? "linear-gradient(135deg, #5baf7a, #4da36a)" : `linear-gradient(135deg, ${c}, ${c}cc)`,
+                    color: "#fff", border: "none", borderRadius: 12, padding: "12px",
+                    cursor: "pointer", fontSize: 13, fontWeight: 700, transition: "all 0.2s",
+                    boxShadow: `0 4px 16px ${rsvps[e.id] ? "#5baf7a" : c}30`,
+                  }}>{rsvps[e.id] ? "✓ You're going! Tap to cancel" : "RSVP — Save my spot"}</button>
+                </GlassCard>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* MAP */}
+      {activeTab === "map" && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#2d2b3d", margin: 0 }}>Campus Map</h1>
+            <p style={{ fontSize: 13, color: "#a09cb0", marginTop: 4 }}>Your next class is in <strong style={{ color: "#7c6bc4" }}>Block B, Room 204</strong></p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr", gap: 12 }}>
+            {locations.map((p, i) => (
+              <GlassCard key={i}>
+                <div style={{ fontSize: 24, marginBottom: 8 }}>📍</div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#2d2b3d" }}>{p.name}</div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+                  <span style={{ fontSize: 11, color: p.status.includes("Open") || p.status.includes("Closes") ? "#5baf7a" : "#e09f3e", fontWeight: 700 }}>{p.status}</span>
+                  <span style={{ fontSize: 11, color: "#a09cb0" }}>{p.hours}</span>
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* CANTEEN */}
+      {activeTab === "canteen" && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#2d2b3d", margin: 0 }}>Canteen Menu</h1>
+            <p style={{ fontSize: 13, color: "#a09cb0", marginTop: 4 }}>Today's menu · Updated 8:00 AM</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {menu.map((m, i) => (
+              <GlassCard key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, color: "#2d2b3d" }}>{m.name}</div>
+                  <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 10, background: "#fef3e2", color: "#e09f3e", padding: "3px 8px", borderRadius: 6, fontWeight: 700 }}>{m.tag}</span>
+                    {m.veg && <span style={{ fontSize: 10, background: "#e8f5ec", color: "#5baf7a", padding: "3px 8px", borderRadius: 6, fontWeight: 700 }}>Vegetarian</span>}
+                    <span style={{ fontSize: 10, background: "#f0eef5", color: "#8a879a", padding: "3px 8px", borderRadius: 6, fontWeight: 600 }}>{m.cals}</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#a09cb0", marginTop: 4 }}>Allergens: {m.allergens}</div>
+                </div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: "#7c6bc4", minWidth: 60, textAlign: "right" }}>{m.price}</div>
+              </GlassCard>
+            ))}
+          </div>
+          <GlassCard style={{ marginTop: 14, textAlign: "center", background: "linear-gradient(135deg, #eae6f4, #f3f0fa)" }}>
+            <div style={{ fontSize: 13, color: "#7c6bc4", fontWeight: 600 }}>Menu updates daily at 8am — check back tomorrow, Sarah!</div>
+          </GlassCard>
+        </div>
+      )}
+
+      {/* HELPDESK */}
+      {activeTab === "helpdesk" && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#2d2b3d", margin: 0 }}>Helpdesk</h1>
+            <p style={{ fontSize: 13, color: "#a09cb0", marginTop: 4 }}>Need help with something? We're here for you.</p>
+          </div>
+          <GlassCard style={{ maxWidth: 520 }}>
+            {ticketSent ? (
+              <div style={{ textAlign: "center", padding: "30px 0" }}>
+                <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg, #5baf7a, #4da36a)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28, color: "#fff" }}>✓</div>
+                <div style={{ fontWeight: 800, fontSize: 20, color: "#2d2b3d", marginBottom: 6 }}>Ticket Submitted!</div>
+                <div style={{ fontSize: 14, color: "#a09cb0", marginBottom: 4 }}>Thanks Sarah, we got your request about:</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "#7c6bc4", marginBottom: 16, padding: "8px 16px", background: "#eae6f4", borderRadius: 10, display: "inline-block" }}>"{ticketSubject}"</div>
+                <div style={{ fontSize: 13, color: "#a09cb0", marginBottom: 20 }}>We'll reply to sarah.mitchell@student.ie within 24 hours.</div>
+                <button onClick={() => { setTicketSent(false); setTicketSubject(""); setTicketDesc(""); }} style={{ background: "linear-gradient(135deg, #7c6bc4, #a78bfa)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 28px", cursor: "pointer", fontSize: 13, fontWeight: 700, boxShadow: "0 4px 16px #7c6bc430" }}>Submit Another Ticket</button>
+              </div>
+            ) : (
+              <>
+                <div style={{ fontWeight: 700, fontSize: 17, marginBottom: 4, color: "#2d2b3d" }}>What's going on, Sarah?</div>
+                <div style={{ fontSize: 13, color: "#a09cb0", marginBottom: 16 }}>Describe your issue and we'll sort it out for you.</div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "#6b5f8a", marginBottom: 6, display: "block" }}>Subject</label>
+                  <input value={ticketSubject} onChange={(e) => setTicketSubject(e.target.value)} placeholder="e.g. Can't access WiFi in Block B" style={{ width: "100%", boxSizing: "border-box", background: "#f8f7fc", borderRadius: 12, padding: "12px 16px", fontSize: 14, border: "2px solid #e8e4f3", outline: "none", color: "#2d2b3d", fontFamily: "inherit", transition: "border 0.2s" }} />
+                </div>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "#6b5f8a", marginBottom: 6, display: "block" }}>Details</label>
+                  <textarea value={ticketDesc} onChange={(e) => setTicketDesc(e.target.value)} placeholder="Tell us more so we can help faster..." style={{ width: "100%", boxSizing: "border-box", background: "#f8f7fc", borderRadius: 12, padding: "12px 16px", fontSize: 14, border: "2px solid #e8e4f3", height: 100, outline: "none", resize: "none", color: "#2d2b3d", fontFamily: "inherit", transition: "border 0.2s" }} />
+                </div>
+                <button onClick={() => {
+                  if (!ticketSubject.trim()) { showToast("Add a subject first, Sarah!"); return; }
+                  setTicketSent(true);
+                  showToast("Ticket sent! We're on it ✓");
+                }} style={{ width: "100%", background: "linear-gradient(135deg, #7c6bc4, #a78bfa)", color: "#fff", border: "none", borderRadius: 12, padding: "14px", fontWeight: 700, fontSize: 14, cursor: "pointer", boxShadow: "0 4px 16px #7c6bc430", transition: "transform 0.2s" }}>Submit Ticket</button>
+              </>
+            )}
+          </GlassCard>
+        </div>
+      )}
+
+      {/* LOST & FOUND */}
+      {activeTab === "lost" && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#2d2b3d", margin: 0 }}>Lost & Found</h1>
+            <p style={{ fontSize: 13, color: "#a09cb0", marginTop: 4 }}>Lost something on campus? Check if it's been handed in.</p>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 12 }}>
+            {lostItems.map((item) => (
+              <GlassCard key={item.id} style={{ opacity: item.claimed ? 0.5 : 1, transition: "opacity 0.3s" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 15, color: "#2d2b3d" }}>{item.item}</div>
+                    <div style={{ fontSize: 12, color: "#a09cb0", marginTop: 4 }}>📍 {item.loc}</div>
+                    <div style={{ fontSize: 11, color: "#a09cb0", marginTop: 2 }}>Found: {item.date}</div>
+                  </div>
+                  {item.claimed ? (
+                    <div style={{ background: "#e8f5ec", color: "#5baf7a", padding: "6px 14px", borderRadius: 10, fontSize: 12, fontWeight: 700 }}>✓ Claimed</div>
+                  ) : (
+                    <button onClick={() => {
+                      setLostItems((p) => p.map((x) => x.id === item.id ? { ...x, claimed: true } : x));
+                      showToast("Claimed! Head to Student Services to collect it 📦");
+                    }} style={{ background: "linear-gradient(135deg, #7c6bc4, #a78bfa)", color: "#fff", border: "none", borderRadius: 10, padding: "8px 16px", cursor: "pointer", fontSize: 12, fontWeight: 700, boxShadow: "0 4px 12px #7c6bc430" }}>That's mine!</button>
+                  )}
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* SETTINGS */}
+      {activeTab === "a11y" && (
+        <div>
+          <div style={{ marginBottom: 20 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 800, color: "#2d2b3d", margin: 0 }}>Accessibility Settings</h1>
+            <p style={{ fontSize: 13, color: "#a09cb0", marginTop: 4 }}>Make the app work just right for you, Sarah.</p>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 480 }}>
+            {[
+              { key: "largeText", label: "Large Text Mode", desc: "Increases font sizes across the app" },
+              { key: "highContrast", label: "High Contrast", desc: "Stronger colour contrast for readability" },
+              { key: "reducedMotion", label: "Reduced Motion", desc: "Minimises animations and transitions" },
+              { key: "screenReader", label: "Screen Reader Hints", desc: "Adds extra labels for assistive tech" },
+            ].map((s) => (
+              <GlassCard key={s.key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#2d2b3d" }}>{s.label}</div>
+                  <div style={{ fontSize: 12, color: "#a09cb0", marginTop: 2 }}>{s.desc}</div>
+                </div>
+                <div role="switch" aria-checked={a11y[s.key]} aria-label={s.label} tabIndex={0} onClick={() => {
+                  setA11y((p) => ({ ...p, [s.key]: !p[s.key] }));
+                  showToast(`${!a11y[s.key] ? "Enabled" : "Disabled"} ${s.label} — saved ✓`);
+                }} style={{
+                  width: 48, height: 28, borderRadius: 14,
+                  background: a11y[s.key] ? "linear-gradient(135deg, #7c6bc4, #a78bfa)" : "#e0dced",
+                  position: "relative", cursor: "pointer", transition: "background 0.3s",
+                  flexShrink: 0, boxShadow: a11y[s.key] ? "0 2px 8px #7c6bc440" : "none",
+                }}>
+                  <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#fff", position: "absolute", top: 3, left: a11y[s.key] ? 23 : 3, transition: "left 0.25s cubic-bezier(0.16,1,0.3,1)", boxShadow: "0 1px 4px #0002" }} />
+                </div>
+              </GlassCard>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: "linear-gradient(180deg, #f8f7fc 0%, #eeecf5 50%, #e8e4f3 100%)", fontFamily: "'Segoe UI', sans-serif", position: "relative" }}>
+      <style>{`
+        @keyframes fadeInUp { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        * { scrollbar-width: thin; scrollbar-color: #c4b5fd #f8f7fc; }
+        *::-webkit-scrollbar { width: 6px; }
+        *::-webkit-scrollbar-track { background: #f8f7fc; }
+        *::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 3px; }
+        button:hover { opacity: 0.92; }
+        input:focus, textarea:focus { border-color: #c4b5fd !important; }
+      `}</style>
+      <Toast message={toast.msg} show={toast.show} />
+      {isMobile && sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "#0004", zIndex: 99 }} />
+      )}
+      {sidebar}
+      {content}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<CompanionApp />);
+</script>
+</body>
+</html>
